@@ -6,66 +6,183 @@
   <title>Diet Analysis Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background:#f7f9fb; margin:40px; }
-    h1 { color:#333; }
-    #info { margin:20px 0; font-weight:bold; }
-    canvas { max-width:600px; margin:40px auto; display:block; }
-    button { padding:8px 14px; border:none; background:#0078d7; color:white; border-radius:5px; cursor:pointer; }
-    button:hover { background:#005a9e; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0078d7;
+      color: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    header h1 { margin: 0; font-size: 26px; letter-spacing: 0.5px; }
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .status {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .status h2 {
+      color: #333;
+      margin: 0;
+      font-size: 22px;
+    }
+    .status button {
+      background-color: #0078d7;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+    .status button:hover { background-color: #005fa3; }
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 30px;
+    }
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    .chart-card h3 {
+      margin-top: 0;
+      color: #0078d7;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    footer {
+      text-align: center;
+      padding: 25px;
+      font-size: 14px;
+      color: #777;
+      margin-top: 40px;
+    }
+    @media (max-width: 768px) {
+      .status { flex-direction: column; gap: 15px; text-align: center; }
+    }
   </style>
 </head>
-<body>
-  <h1>Diet Analysis Dashboard (Azure Cloud)</h1>
-  <button onclick="loadDietData()">Refresh Data</button>
-  <div id="info">Loading cloud data...</div>
 
-  <canvas id="proteinChart"></canvas>
-  <canvas id="carbChart"></canvas>
-  <canvas id="fatChart"></canvas>
+<body>
+  <header>
+    <h1>Diet Analysis Dashboard (Azure Cloud)</h1>
+  </header>
+
+  <div class="container">
+    <div class="status">
+      <h2 id="status-text">Loading data from Azure Function...</h2>
+      <button onclick="loadDietData()">🔄 Refresh Data</button>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <h3>Protein (g) by Diet Type</h3>
+        <canvas id="proteinChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Carbs (g) by Diet Type</h3>
+        <canvas id="carbChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Fat (g) by Diet Type</h3>
+        <canvas id="fatChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Cloud Diet Analytics | Developed by Neel Jayeshbhai Moradiya
+  </footer>
 
   <script>
-  async function loadDietData() {
-    const url = "https://diet-analysis-func-neel-hqbnfgeyfvgegqbh.canadacentral-01.azurewebsites.net/api/dietFunction";
-    document.getElementById("info").innerText = "Fetching data...";
-    const t0 = performance.now();
+    let proteinChartObj, carbChartObj, fatChartObj;
 
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const t1 = performance.now();
+    async function loadDietData() {
+      const url = "https://diet-analysis-func-neel-hqbnfgeyfvgegqbh.canadacentral-01.azurewebsites.net/api/dietFunction";
+      const status = document.getElementById("status-text");
+      status.textContent = "Fetching latest data from Azure...";
+      const t0 = performance.now();
 
-      const diets = Object.keys(data.averages["Protein(g)"]);
-      const protein = Object.values(data.averages["Protein(g)"]);
-      const carbs = Object.values(data.averages["Carbs(g)"]);
-      const fat = Object.values(data.averages["Fat(g)"]);
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const t1 = performance.now();
 
-      document.getElementById("info").innerText =
-        `Highest Protein Diet: ${data.highest_protein_diet.toUpperCase()} | Execution Time: ${(t1 - t0).toFixed(2)} ms`;
+        if (data.status !== "success") {
+          status.textContent = "Error: " + data.message;
+          return;
+        }
 
-      // Protein Bar Chart
-      new Chart(document.getElementById("proteinChart"), {
-        type: "bar",
-        data: { labels: diets, datasets: [{ label: "Protein (g)", data: protein, backgroundColor:"#4e79a7" }] }
-      });
+        const diets = Object.keys(data.averages["Protein(g)"]);
+        const protein = Object.values(data.averages["Protein(g)"]);
+        const carbs = Object.values(data.averages["Carbs(g)"]);
+        const fat = Object.values(data.averages["Fat(g)"]);
 
-      // Carbs Line Chart
-      new Chart(document.getElementById("carbChart"), {
-        type: "line",
-        data: { labels: diets, datasets: [{ label: "Carbs (g)", data: carbs, borderColor:"#f28e2b", fill:false }] }
-      });
+        status.textContent =
+          `✅ Highest Protein Diet: ${data.highest_protein_diet.toUpperCase()} | Execution Time: ${(t1 - t0).toFixed(1)} ms`;
 
-      // Fat Pie Chart
-      new Chart(document.getElementById("fatChart"), {
-        type: "pie",
-        data: { labels: diets, datasets: [{ label: "Fat (g)", data: fat, backgroundColor:["#e15759","#76b7b2","#59a14f","#edc949","#af7aa1"] }] }
-      });
+        const commonOptions = {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        };
 
-    } catch (err) {
-      document.getElementById("info").innerText = "Error fetching data: " + err;
+        // Destroy old charts before creating new ones
+        if (proteinChartObj) proteinChartObj.destroy();
+        if (carbChartObj) carbChartObj.destroy();
+        if (fatChartObj) fatChartObj.destroy();
+
+        proteinChartObj = new Chart(document.getElementById("proteinChart"), {
+          type: "bar",
+          data: { labels: diets, datasets: [{ label: "Protein (g)", data: protein, backgroundColor: "#0078d7" }] },
+          options: commonOptions
+        });
+
+        carbChartObj = new Chart(document.getElementById("carbChart"), {
+          type: "line",
+          data: { labels: diets, datasets: [{ label: "Carbs (g)", data: carbs, borderColor: "#f28e2b", tension: 0.3 }] },
+          options: commonOptions
+        });
+
+        fatChartObj = new Chart(document.getElementById("fatChart"), {
+          type: "pie",
+          data: {
+            labels: diets,
+            datasets: [{
+              label: "Fat (g)",
+              data: fat,
+              backgroundColor: ["#e15759","#76b7b2","#59a14f","#edc949","#af7aa1"]
+            }]
+          }
+        });
+
+      } catch (err) {
+        status.textContent = "❌ Failed to fetch data: " + err;
+      }
     }
-  }
 
-  loadDietData();
+    loadDietData();
   </script>
 </body>
 </html>
