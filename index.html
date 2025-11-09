@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diet Analysis Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f7f9fb; margin:40px; }
+    h1 { color:#333; }
+    #info { margin:20px 0; font-weight:bold; }
+    canvas { max-width:600px; margin:40px auto; display:block; }
+    button { padding:8px 14px; border:none; background:#0078d7; color:white; border-radius:5px; cursor:pointer; }
+    button:hover { background:#005a9e; }
+  </style>
+</head>
+<body>
+  <h1>Diet Analysis Dashboard (Azure Cloud)</h1>
+  <button onclick="loadDietData()">Refresh Data</button>
+  <div id="info">Loading cloud data...</div>
+
+  <canvas id="proteinChart"></canvas>
+  <canvas id="carbChart"></canvas>
+  <canvas id="fatChart"></canvas>
+
+  <script>
+  async function loadDietData() {
+    const url = "https://diet-analysis-func-neel-hqbnfgeyfvgegqbh.canadacentral-01.azurewebsites.net/api/dietFunction";
+    document.getElementById("info").innerText = "Fetching data...";
+    const t0 = performance.now();
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const t1 = performance.now();
+
+      const diets = Object.keys(data.averages["Protein(g)"]);
+      const protein = Object.values(data.averages["Protein(g)"]);
+      const carbs = Object.values(data.averages["Carbs(g)"]);
+      const fat = Object.values(data.averages["Fat(g)"]);
+
+      document.getElementById("info").innerText =
+        `Highest Protein Diet: ${data.highest_protein_diet.toUpperCase()} | Execution Time: ${(t1 - t0).toFixed(2)} ms`;
+
+      // Protein Bar Chart
+      new Chart(document.getElementById("proteinChart"), {
+        type: "bar",
+        data: { labels: diets, datasets: [{ label: "Protein (g)", data: protein, backgroundColor:"#4e79a7" }] }
+      });
+
+      // Carbs Line Chart
+      new Chart(document.getElementById("carbChart"), {
+        type: "line",
+        data: { labels: diets, datasets: [{ label: "Carbs (g)", data: carbs, borderColor:"#f28e2b", fill:false }] }
+      });
+
+      // Fat Pie Chart
+      new Chart(document.getElementById("fatChart"), {
+        type: "pie",
+        data: { labels: diets, datasets: [{ label: "Fat (g)", data: fat, backgroundColor:["#e15759","#76b7b2","#59a14f","#edc949","#af7aa1"] }] }
+      });
+
+    } catch (err) {
+      document.getElementById("info").innerText = "Error fetching data: " + err;
+    }
+  }
+
+  loadDietData();
+  </script>
+</body>
+</html>
