@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diet Analysis Dashboard</title>
+  <title>Nutritional Insights Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.2.0/dist/chartjs-chart-matrix.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -12,20 +13,45 @@
       margin: 0;
       padding: 0;
     }
+
     header {
       background-color: #0078d7;
       color: white;
       padding: 20px 40px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      text-align: center;
     }
-    header h1 { margin: 0; font-size: 26px; letter-spacing: 0.5px; }
+
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 4px 0 0; font-size: 15px; opacity: 0.9; }
+
     .container {
       max-width: 1200px;
-      margin: 40px auto;
+      margin: 30px auto;
       padding: 0 20px;
     }
+
+    .filter-bar {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar label { font-weight: 600; color: #333; margin-right: 10px; }
+    .filter-bar select {
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
     .status {
-      background: white;
+      background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 20px;
@@ -35,27 +61,25 @@
       align-items: center;
       flex-wrap: wrap;
     }
-    .status h2 {
-      color: #333;
-      margin: 0;
-      font-size: 22px;
-    }
+
+    .status h2 { color: #333; font-size: 18px; margin: 0; }
     .status button {
       background-color: #0078d7;
-      border: none;
       color: white;
-      padding: 10px 18px;
-      border-radius: 6px;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
       cursor: pointer;
-      font-weight: 500;
-      transition: background 0.3s ease;
+      transition: background 0.3s;
     }
     .status button:hover { background-color: #005fa3; }
+
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 30px;
+      gap: 25px;
     }
+
     .chart-card {
       background: white;
       border-radius: 12px;
@@ -63,31 +87,66 @@
       padding: 20px;
       text-align: center;
     }
+
     .chart-card h3 {
       margin-top: 0;
       color: #0078d7;
       font-size: 18px;
       margin-bottom: 15px;
     }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+      gap: 10px;
+    }
+    .pagination button {
+      border: 1px solid #0078d7;
+      background: #fff;
+      color: #0078d7;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .pagination button:hover, .pagination button.active {
+      background: #0078d7;
+      color: #fff;
+    }
+
     footer {
       text-align: center;
       padding: 25px;
       font-size: 14px;
       color: #777;
-      margin-top: 40px;
+      margin-top: 20px;
     }
+
     @media (max-width: 768px) {
-      .status { flex-direction: column; gap: 15px; text-align: center; }
+      .filter-bar, .status { flex-direction: column; text-align: center; gap: 10px; }
     }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>Diet Analysis Dashboard (Azure Cloud)</h1>
+    <h1>Nutritional Insights</h1>
+    <p>Explore macronutrient trends across different diet types.</p>
   </header>
 
   <div class="container">
+
+    <div class="filter-bar">
+      <div>
+        <label for="dietFilter">Search by Diet Type:</label>
+        <select id="dietFilter" onchange="updateFilter()">
+          <option value="all">All Diet Types</option>
+        </select>
+      </div>
+      <button onclick="loadDietData()">Get Nutritional Insights</button>
+    </div>
+
     <div class="status">
       <h2 id="status-text">Loading data from Azure Function...</h2>
       <button onclick="loadDietData()">🔄 Refresh Data</button>
@@ -95,29 +154,37 @@
 
     <div class="charts">
       <div class="chart-card">
-        <h3>Protein (g) by Diet Type</h3>
+        <h3>Average Macronutrient Content (Bar)</h3>
         <canvas id="proteinChart"></canvas>
       </div>
 
       <div class="chart-card">
-        <h3>Carbs (g) by Diet Type</h3>
-        <canvas id="carbChart"></canvas>
+        <h3>Protein vs Carbs (Scatter)</h3>
+        <canvas id="scatterChart"></canvas>
       </div>
 
       <div class="chart-card">
-        <h3>Fat (g) by Diet Type</h3>
-        <canvas id="fatChart"></canvas>
+        <h3>Nutrient Correlations (Heatmap)</h3>
+        <canvas id="heatmapChart"></canvas>
       </div>
+
+      <div class="chart-card">
+        <h3>Recipe Distribution (Pie)</h3>
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <button disabled>Previous</button>
+      <button class="active">1</button>
+      <button>2</button>
+      <button>Next</button>
     </div>
   </div>
 
-  <footer>
-    © 2025 Cloud Diet Analytics | Developed by Neel Jayeshbhai Moradiya
-  </footer>
+  <footer>© 2025 Nutritional Insights. All Rights Reserved.</footer>
 
   <script>
-    let proteinChartObj, carbChartObj, fatChartObj;
-
     async function loadDietData() {
       const url = "https://diet-analysis-func-neel-hqbnfgeyfvgegqbh.canadacentral-01.azurewebsites.net/api/dietFunction";
       const status = document.getElementById("status-text");
@@ -139,38 +206,100 @@
         const carbs = Object.values(data.averages["Carbs(g)"]);
         const fat = Object.values(data.averages["Fat(g)"]);
 
+        // Populate dropdown
+        const select = document.getElementById("dietFilter");
+        select.innerHTML = `<option value="all">All Diet Types</option>` +
+          diets.map(d => `<option value="${d}">${d}</option>`).join("");
+
         status.textContent =
           `✅ Highest Protein Diet: ${data.highest_protein_diet.toUpperCase()} | Execution Time: ${(t1 - t0).toFixed(1)} ms`;
 
-        const commonOptions = {
-          responsive: true,
-          scales: { y: { beginAtZero: true } },
-          plugins: { legend: { display: false } }
-        };
+        // Reset canvases before redrawing
+        ["proteinChart", "scatterChart", "heatmapChart", "pieChart"].forEach(id => {
+          const canvas = document.getElementById(id);
+          canvas.replaceWith(canvas.cloneNode(true));
+        });
 
-        // Destroy old charts before creating new ones
-        if (proteinChartObj) proteinChartObj.destroy();
-        if (carbChartObj) carbChartObj.destroy();
-        if (fatChartObj) fatChartObj.destroy();
-
-        proteinChartObj = new Chart(document.getElementById("proteinChart"), {
+        // Bar Chart
+        new Chart(document.getElementById("proteinChart"), {
           type: "bar",
           data: { labels: diets, datasets: [{ label: "Protein (g)", data: protein, backgroundColor: "#0078d7" }] },
-          options: commonOptions
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
         });
 
-        carbChartObj = new Chart(document.getElementById("carbChart"), {
-          type: "line",
-          data: { labels: diets, datasets: [{ label: "Carbs (g)", data: carbs, borderColor: "#f28e2b", tension: 0.3 }] },
-          options: commonOptions
+        // Scatter Plot
+        const scatterData = diets.map((d, i) => ({ x: protein[i], y: carbs[i], label: d }));
+        new Chart(document.getElementById("scatterChart"), {
+          type: "scatter",
+          data: { datasets: [{ label: "Protein vs Carbs", data: scatterData, backgroundColor: "#f28e2b" }] },
+          options: {
+            scales: {
+              x: { title: { display: true, text: "Protein (g)" } },
+              y: { title: { display: true, text: "Carbs (g)" } }
+            }
+          }
         });
 
-        fatChartObj = new Chart(document.getElementById("fatChart"), {
+        // Heatmap (delayed init to ensure chartArea exists)
+        setTimeout(() => {
+          const nutrients = ["Protein(g)", "Carbs(g)", "Fat(g)"];
+          const corr = (a, b) => {
+            const n = a.length;
+            const meanA = a.reduce((x, y) => x + y, 0) / n;
+            const meanB = b.reduce((x, y) => x + y, 0) / n;
+            const num = a.map((x, i) => (x - meanA) * (b[i] - meanB)).reduce((x, y) => x + y, 0);
+            const den = Math.sqrt(a.map(x => (x - meanA) ** 2).reduce((x, y) => x + y, 0)) *
+                        Math.sqrt(b.map(x => (x - meanB) ** 2).reduce((x, y) => x + y, 0));
+            return parseFloat((num / den).toFixed(2));
+          };
+
+          const matrix = [
+            [1, corr(protein, carbs), corr(protein, fat)],
+            [corr(carbs, protein), 1, corr(carbs, fat)],
+            [corr(fat, protein), corr(fat, carbs), 1]
+          ];
+
+          const heatData = [];
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              heatData.push({ x: i, y: j, v: matrix[i][j] });
+            }
+          }
+
+          const ctx = document.getElementById("heatmapChart");
+          new Chart(ctx, {
+            type: "matrix",
+            data: {
+              datasets: [{
+                label: "Correlations",
+                data: heatData,
+                backgroundColor(c) {
+                  const v = c.dataset.data[c.dataIndex].v;
+                  const alpha = Math.abs(v);
+                  return v > 0
+                    ? `rgba(0,120,215,${alpha})`
+                    : `rgba(220,53,69,${alpha})`;
+                },
+                width: c => (c.chart.chartArea ? (c.chart.chartArea.width / 3) - 10 : 50),
+                height: c => (c.chart.chartArea ? (c.chart.chartArea.height / 3) - 10 : 50)
+              }]
+            },
+            options: {
+              scales: {
+                x: { ticks: { callback: v => nutrients[v] }, offset: true },
+                y: { ticks: { callback: v => nutrients[v] }, offset: true }
+              },
+              plugins: { legend: { display: false } }
+            }
+          });
+        }, 150);
+
+        // Pie Chart
+        new Chart(document.getElementById("pieChart"), {
           type: "pie",
           data: {
             labels: diets,
             datasets: [{
-              label: "Fat (g)",
               data: fat,
               backgroundColor: ["#e15759","#76b7b2","#59a14f","#edc949","#af7aa1"]
             }]
@@ -179,6 +308,13 @@
 
       } catch (err) {
         status.textContent = "❌ Failed to fetch data: " + err;
+      }
+    }
+
+    function updateFilter() {
+      const diet = document.getElementById("dietFilter").value;
+      if (diet !== "all") {
+        alert("Filter selected: " + diet + " (placeholder feature)");
       }
     }
 
