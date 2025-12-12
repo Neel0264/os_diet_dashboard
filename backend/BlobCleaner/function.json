@@ -1,0 +1,12 @@
+{
+  "bindings": [
+    {
+      "name": "inputBlob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "data/All_Diets.csv",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}
+
