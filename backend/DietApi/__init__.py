@@ -1,41 +1,62 @@
 import azure.functions as func
-import pandas as pd
 import json
 import os
-from azure.storage.blob import BlobServiceClient
-from io import StringIO
+from pymongo import MongoClient
+import logging
 
 def main(req: func.HttpRequest):
+    try:
+        # Connect to Cosmos DB (MongoDB API)
+        conn_string = os.environ["COSMOS_CONN_STRING"]
+        db_name = os.environ["COSMOS_DB_NAME"]
+        collection_name = os.environ.get("COSMOS_CLEANED_COLLECTION", "cleanedData")
 
-    # connect to Azure Blob Storage
-    conn = os.environ["AzureWebJobsStorage"]
-    blob_service = BlobServiceClient.from_connection_string(conn)
+        client = MongoClient(conn_string)
+        db = client[db_name]
+        collection = db[collection_name]
 
-    container = blob_service.get_container_client("data")
-    blob = container.get_blob_client("clean_diets.csv")
+        # Query params
+        diet = req.params.get("diet")
+        search = req.params.get("search", "")
+        page = int(req.params.get("page", 1))
+        pageSize = int(req.params.get("pageSize", 9))
 
-    csv_data = blob.download_blob().readall().decode("utf-8")
-    df = pd.read_csv(StringIO(csv_data))
+        # Build query filter
+        query = {}
 
-    # query params
-    diet = req.params.get("diet")
-    search = req.params.get("search", "")
-    page = int(req.params.get("page", 1))
-    pageSize = int(req.params.get("pageSize", 5))
+        if diet and diet != "All Diets":
+            query["diet_type"] = {"$regex": diet, "$options": "i"}
 
-    if diet:
-        df = df[df["Diet_type"].str.contains(diet, case=False, na=False)]
+        if search:
+            query["$or"] = [
+                {"recipe_name": {"$regex": search, "$options": "i"}},
+                {"diet_type": {"$regex": search, "$options": "i"}},
+                {"cuisine_type": {"$regex": search, "$options": "i"}}
+            ]
 
-    if search:
-        df = df[df.apply(lambda r: search.lower() in str(r).lower(), axis=1)]
+        # Calculate pagination
+        skip = (page - 1) * pageSize
 
-    start = (page - 1) * pageSize
-    end = start + pageSize
+        # Query database
+        results = list(collection.find(query).skip(skip).limit(pageSize))
 
-    result = df.iloc[start:end].to_dict(orient="records")
+        # Remove MongoDB _id field
+        for item in results:
+            if "_id" in item:
+                del item["_id"]
 
-    return func.HttpResponse(
-        json.dumps(result),
-        mimetype="application/json"
-    )
+        return func.HttpResponse(
+            json.dumps(results),
+            mimetype="application/json",
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
+
+    except Exception as e:
+        logging.error(f"Error in DietApi: {str(e)}")
+        return func.HttpResponse(
+            json.dumps({"error": str(e)}),
+            status_code=500,
+            mimetype="application/json",
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
 
