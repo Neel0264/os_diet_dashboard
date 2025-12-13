@@ -103,9 +103,9 @@ export default function Dashboard({ user, onLogout }) {
   const calculateStats = (data) => {
     setStats({
       total: data.length,
-      vegan: data.filter(r => r.Diet_type?.toLowerCase().includes('vegan')).length,
-      paleo: data.filter(r => r.Diet_type?.toLowerCase().includes('paleo')).length,
-      keto: data.filter(r => r.Diet_type?.toLowerCase().includes('keto')).length,
+      vegan: data.filter(r => r.diet_type?.toLowerCase().includes('vegan')).length,
+      paleo: data.filter(r => r.diet_type?.toLowerCase().includes('paleo')).length,
+      keto: data.filter(r => r.diet_type?.toLowerCase().includes('keto')).length,
     });
   };
 
@@ -119,23 +119,23 @@ export default function Dashboard({ user, onLogout }) {
   }, [diet, debouncedSearch]);
 
   const toggleFavorite = (recipe) => {
-    const isFavorited = favorites.some(fav => fav.Recipe_name === recipe.Recipe_name);
+    const isFavorited = favorites.some(fav => fav.recipe_name === recipe.recipe_name);
     if (isFavorited) {
-      setFavorites(favorites.filter(fav => fav.Recipe_name !== recipe.Recipe_name));
+      setFavorites(favorites.filter(fav => fav.recipe_name !== recipe.recipe_name));
     } else {
       setFavorites([...favorites, recipe]);
     }
   };
 
   const isFavorited = (recipe) => {
-    return favorites.some(fav => fav.Recipe_name === recipe.Recipe_name);
+    return favorites.some(fav => fav.recipe_name === recipe.recipe_name);
   };
 
   const exportData = () => {
     const csvContent = "data:text/csv;charset=utf-8,"
       + "Recipe Name,Diet Type,Protein(g),Carbs(g),Fat(g)\n"
       + recipes.map(r =>
-        `"${r.Recipe_name}","${r.Diet_type}",${r["Protein(g)"]},${r["Carbs(g)"]},${r["Fat(g)"]}`
+        `"${r.recipe_name}","${r.diet_type}",${r["protein(g)"]},${r["carbs(g)"]},${r["fat(g)"]}`
       ).join("\n");
 
     const link = document.createElement("a");
@@ -145,10 +145,10 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const chartData = recipes.map((r) => ({
-    name: r.Recipe_name?.slice(0, 15) || "Unknown",
-    Protein: r["Protein(g)"] || 0,
-    Carbs: r["Carbs(g)"] || 0,
-    Fat: r["Fat(g)"] || 0,
+    name: r.recipe_name?.slice(0, 15) || "Unknown",
+    Protein: r["protein(g)"] || 0,
+    Carbs: r["carbs(g)"] || 0,
+    Fat: r["fat(g)"] || 0,
   }));
 
   const pieData = [
@@ -380,7 +380,7 @@ export default function Dashboard({ user, onLogout }) {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <h2 className="font-bold text-xl flex-1 pr-2">
-                      {r.Recipe_name || "Unnamed Recipe"}
+                      {r.recipe_name || "Unnamed Recipe"}
                     </h2>
                     <button
                       onClick={(e) => {
@@ -393,8 +393,8 @@ export default function Dashboard({ user, onLogout }) {
                     </button>
                   </div>
 
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border mb-4 ${getDietBadgeColor(r.Diet_type)}`}>
-                    {r.Diet_type || "General"}
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border mb-4 ${getDietBadgeColor(r.diet_type)}`}>
+                    {r.diet_type || "General"}
                   </span>
 
                   <div className="space-y-3 mb-4">
@@ -402,9 +402,9 @@ export default function Dashboard({ user, onLogout }) {
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Protein</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{width: `${Math.min((r["Protein(g)"] / 50) * 100, 100)}%`}}></div>
+                          <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{width: `${Math.min((r["protein(g)"] / 50) * 100, 100)}%`}}></div>
                         </div>
-                        <span className="font-bold text-sm">{r["Protein(g)"]}g</span>
+                        <span className="font-bold text-sm">{r["protein(g)"]}g</span>
                       </div>
                     </div>
 
@@ -412,9 +412,9 @@ export default function Dashboard({ user, onLogout }) {
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Carbs</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500" style={{width: `${Math.min((r["Carbs(g)"] / 100) * 100, 100)}%`}}></div>
+                          <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500" style={{width: `${Math.min((r["carbs(g)"] / 100) * 100, 100)}%`}}></div>
                         </div>
-                        <span className="font-bold text-sm">{r["Carbs(g)"]}g</span>
+                        <span className="font-bold text-sm">{r["carbs(g)"]}g</span>
                       </div>
                     </div>
 
@@ -422,9 +422,9 @@ export default function Dashboard({ user, onLogout }) {
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Fat</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500" style={{width: `${Math.min((r["Fat(g)"] / 50) * 100, 100)}%`}}></div>
+                          <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500" style={{width: `${Math.min((r["fat(g)"] / 50) * 100, 100)}%`}}></div>
                         </div>
-                        <span className="font-bold text-sm">{r["Fat(g)"]}g</span>
+                        <span className="font-bold text-sm">{r["fat(g)"]}g</span>
                       </div>
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export default function Dashboard({ user, onLogout }) {
                     <div>
                       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories</p>
                       <p className="text-lg font-bold text-purple-600">
-                        {calculateCalories(r["Protein(g)"], r["Carbs(g)"], r["Fat(g)"])} kcal
+                        {calculateCalories(r["protein(g)"], r["carbs(g)"], r["fat(g)"])} kcal
                       </p>
                     </div>
                     <Star className={`w-6 h-6 ${darkMode ? 'text-gray-600' : 'text-yellow-400'} fill-current`} />
@@ -644,7 +644,7 @@ export default function Dashboard({ user, onLogout }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedRecipe(null)}>
           <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">{selectedRecipe.Recipe_name}</h2>
+              <h2 className="text-2xl font-bold text-white">{selectedRecipe.recipe_name}</h2>
               <button onClick={() => setSelectedRecipe(null)} className="text-white hover:bg-white/20 rounded-full p-2 transition">
                 <X className="w-6 h-6" />
               </button>
@@ -652,28 +652,28 @@ export default function Dashboard({ user, onLogout }) {
 
             <div className="p-6 space-y-6">
               <div>
-                <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold border ${getDietBadgeColor(selectedRecipe.Diet_type)}`}>
-                  {selectedRecipe.Diet_type || "General"}
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold border ${getDietBadgeColor(selectedRecipe.diet_type)}`}>
+                  {selectedRecipe.diet_type || "General"}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-purple-50'} rounded-xl p-4`}>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-purple-600'} font-medium mb-1`}>Protein</p>
-                  <p className="text-3xl font-bold">{selectedRecipe["Protein(g)"]}g</p>
+                  <p className="text-3xl font-bold">{selectedRecipe["protein(g)"]}g</p>
                 </div>
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-xl p-4`}>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-blue-600'} font-medium mb-1`}>Carbs</p>
-                  <p className="text-3xl font-bold">{selectedRecipe["Carbs(g)"]}g</p>
+                  <p className="text-3xl font-bold">{selectedRecipe["carbs(g)"]}g</p>
                 </div>
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-amber-50'} rounded-xl p-4`}>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-amber-600'} font-medium mb-1`}>Fat</p>
-                  <p className="text-3xl font-bold">{selectedRecipe["Fat(g)"]}g</p>
+                  <p className="text-3xl font-bold">{selectedRecipe["fat(g)"]}g</p>
                 </div>
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-green-50'} rounded-xl p-4`}>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-green-600'} font-medium mb-1`}>Calories</p>
                   <p className="text-3xl font-bold">
-                    {calculateCalories(selectedRecipe["Protein(g)"], selectedRecipe["Carbs(g)"], selectedRecipe["Fat(g)"])}
+                    {calculateCalories(selectedRecipe["protein(g)"], selectedRecipe["carbs(g)"], selectedRecipe["fat(g)"])}
                   </p>
                 </div>
               </div>
