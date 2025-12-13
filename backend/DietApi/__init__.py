@@ -40,23 +40,13 @@ def main(req: func.HttpRequest):
         # Query database
         results = list(collection.find(query).skip(skip).limit(pageSize))
 
-        # Transform results to match Dashboard field name expectations
-        transformed_results = []
+        # Remove MongoDB _id field
         for item in results:
-            transformed = {
-                "Recipe_name": item.get("recipe_name", ""),
-                "Diet_type": item.get("diet_type", ""),
-                "Cuisine_type": item.get("cuisine_type", ""),
-                "Protein(g)": item.get("protein(g)", 0),
-                "Carbs(g)": item.get("carbs(g)", 0),
-                "Fat(g)": item.get("fat(g)", 0),
-                "Extraction_day": item.get("extraction_day", ""),
-                "Extraction_time": item.get("extraction_time", "")
-            }
-            transformed_results.append(transformed)
+            if "_id" in item:
+                del item["_id"]
 
         return func.HttpResponse(
-            json.dumps(transformed_results),
+            json.dumps(results),
             mimetype="application/json",
             headers={"Access-Control-Allow-Origin": "*"}
         )
